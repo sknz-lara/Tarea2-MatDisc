@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint-gcc.h>
 //parametros de máximos 
 #define MAX_LINEA 256
 #define MAX_MUROS 50
@@ -41,31 +42,33 @@ typedef struct {
     int num_escaleras;
 } Castillo;
 
+// Nueva versión de leer_enteros
+// Nueva versión de leer_enteros
 int leer_enteros(const char* linea, int n){
-    char leer[MAX_LINEA];
-    strcpy(leer, linea);
-    char* end = strtok(leer, " ");
-    int contador=0;
-    while(end!=NULL){
-        for(int i=0;end[i]!='\0';i++){ // verificamos que sean numeros enteros
-            if(end[i] < '0'||end[i]>'9'){
-                return 0;
-            }   
-        }
-        if (end[0]=='-'){ return 0;}
+    int contador = 0;
+    const char* ptr = linea;
+    int temp;
 
-        contador++;
-        end = strtok(NULL, " ");
+    // Saltar BOM si existe (0xEF,0xBB,0xBF)
+    if ((unsigned char)ptr[0] == 0xEF && (unsigned char)ptr[1] == 0xBB && (unsigned char)ptr[2] == 0xBF) {
+        ptr += 3;
     }
-    
-    return (contador == n); // si es 1 no es lo esperado
+
+    while (sscanf(ptr, "%d", &temp) == 1) {
+        contador++;
+        // Avanzar hasta el siguiente espacio
+        while (*ptr != ' ' && *ptr != '\0' && *ptr != '\n') ptr++;
+        while (*ptr == ' ') ptr++;
+    }
+
+    return (contador == n);
 }
 
 // Verificar que las coordenadas estén dentro de los límites del castillo
 bool coordenadas_validas(const Castillo* castillo, int piso, int x, int y) {
-    return piso >= 0 && piso < castillo->pisos &&
-           x >= 0 && x < castillo->ancho &&
-           y >= 0 && y < castillo->alto;
+    return piso >= 0 && piso <= castillo->pisos &&
+           x >= 0 && x <= castillo->ancho &&
+           y >= 0 && y <= castillo->alto;
 }
 
 
@@ -73,7 +76,7 @@ typedef enum{ DIM, HRONGAN, SALIDA, MUROS, MONSTRUO, PORTAL, ESCALERA } Estado;
 
 int lectura_archivo(const char* txt, Castillo* castillo) {
     FILE* fp = fopen(txt,"r");
-    if(fp == NULL){
+    if(!fp){
         printf("Error al abrir archivo %s\n",txt);
         return -1;
     }
@@ -116,11 +119,12 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
         switch(estado){
         // seguimos los casos de estados para verificar que cada linea tenga el número de enteros exactos
             case DIM:{
-                if (!leer_enteros(buffer,3) || sscanf(buffer, "%d %d %d", &castillo->pisos, &castillo->ancho, &castillo->alto) != 3) {
+                if (!leer_enteros(buffer,3) || sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3) {
                     printf("Error en línea %d: La dimensión del castillo deben tener exactamente 3 enteros\n", lineas);
                     fclose(fp);
                     return -1;
-                }                
+                }
+                castillo->pisos=piso; castillo->ancho=x; castillo->alto=y;                
                 estado=HRONGAN;
                 break;
             }
@@ -147,7 +151,6 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
                 break;
             }
             case MUROS:{
-                Muro* m=&castillo->muros[castillo->num_muros++];
                 if (!leer_enteros(buffer,5) || sscanf(buffer, "%d %d %d %d %d", &piso, &x, &y, &x2, &y2) != 5 ||
                     !coordenadas_validas(castillo, piso, x, y) ||
                     !coordenadas_validas(castillo, piso, x2, y2)) {
@@ -155,18 +158,19 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
                     fclose(fp);
                     return -1;
                 }
+                Muro* m=&castillo->muros[castillo->num_muros++];
                 m->inicio.piso = piso; m->inicio.x = x; m->inicio.y = y;
                 m->x_fin = x2; m->y_fin = y2;
                 break;
             }
             case MONSTRUO:{
-                Monstruo *mons=&castillo->monstruos[castillo->num_monstruos++];
                 if (!leer_enteros(buffer,4) || sscanf(buffer, "%d %d %d %d", &piso, &x, &y, &vidas) != 4 ||
                     !coordenadas_validas(castillo, piso, x, y)) {
                     printf("Error en línea %d: Los muros se definen con 4 enteros\n", lineas);
                     fclose(fp);
                     return -1;
                 }
+                Monstruo* mons=&castillo->monstruos[castillo->num_monstruos++];
                 mons->posicion_monstruo.piso = piso;
                 mons->posicion_monstruo.x = x;
                 mons->posicion_monstruo.y = y;
@@ -174,25 +178,27 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
                 break;
             }
             case PORTAL: {
-                Portal *p=&castillo->portales[castillo->num_portales++];
+                
                 if (!leer_enteros(buffer,6) || sscanf(buffer, "%d %d %d %d %d %d", &piso, &x, &y, &piso2, &x2, &y2) != 6 ||
                     !coordenadas_validas(castillo, piso, x, y) || !coordenadas_validas(castillo, piso2, x2, y2)) {
                     printf("Error en línea %d: Los portales se definen con 6 enteros\n", lineas);
                     fclose(fp);
                     return -1;
                 }
+                Portal* p=&castillo->portales[castillo->num_portales++];
                 p->portal_inicio.piso = piso; p->portal_inicio.x = x; p->portal_inicio.y = y;
                 p->portal_fin.piso = piso2; p->portal_fin.x = x2; p->portal_fin.y = y2;
                 break;
             }
             case ESCALERA: {
-                Escalera *e=&castillo->escaleras[castillo->num_escaleras++];
+                
                 if (!leer_enteros(buffer,3) ||sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3 ||
                     !coordenadas_validas(castillo, piso, x, y) || !coordenadas_validas(castillo, piso + 1, x, y)) {
                     printf("Error en línea %d: Las escaleras se definen con 3 enteros\n", lineas);
                     fclose(fp);
                     return -1;
                 }
+                Escalera* e=&castillo->escaleras[castillo->num_escaleras++];
                 e->posicion_inferior.piso = piso; e->posicion_inferior.x = x; e->posicion_inferior.y = y;
                 e->posicion_superior.piso = piso + 1; e->posicion_superior.x = x; e->posicion_superior.y = y;
                 break;
@@ -210,9 +216,15 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    char txt = atoi(argv[1]); //archivo
-    lectura_archivo("Castle/"+txt, &c);
-
-    
+    char* txt = (argv[1]); //archivo
+    //lectura_archivo("C:\\Users\\cuchu\\OneDrive - Universidad de Concepción\\Informática\2025-2\\Mate_Discretas\\Tarea2-MatDisc\\Castles/"+txt, &c);
+    lectura_archivo(txt, &c);
+    printf("Castillo leido: %d pisos, ancho %d y alto %d\n", c.pisos, c.ancho, c.alto);
+    printf("Hrongan: piso %d, x %d, y %d\n", c.hrongan.piso, c.hrongan.x, c.hrongan.y);
+    printf("Salida: piso %d, x %d, y %d\n", c.salida.piso, c.salida.x, c.salida.y);
+    printf("Número de muros: %d\n", c.num_muros);
+    printf("Número de monstruos: %d\n", c.num_monstruos);
+    printf("Número de portales: %d\n", c.num_portales);
+    printf("Número de escaleras: %d\n", c.num_escaleras);
     return 0;
 }
