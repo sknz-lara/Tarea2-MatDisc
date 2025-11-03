@@ -1,29 +1,30 @@
 #ifndef CASTLE_H
 #define CASTLE_H
 
-// ==== ESTRUCTURAS ====
-
-typedef struct {
-    int *neighbors;
+typedef struct Node {
+    int id;
+    int p, x, y;
+    struct Node **neighbors;
     int count;
-    int cap;
-} AdjList;
+    int enemy_cost;
+} Node;
 
 typedef struct {
-    int P;      // pisos
-    int X;      // ancho
-    int Y;      // alto
+    int P;
+    int X;
+    int Y;
     int n_nodes;
-    AdjList *adj;
+    Node *nodes;
 } Graph;
 
-// ==== FUNCIONES ====
+Graph  create(int P, int X, int Y);
+void   destroy(Graph *g);
+long long edge_count(const Graph *g);
+Node*  get_node(Graph *g, int p, int x, int y);
 
-Graph  graph_create(int P, int X, int Y);
-void   graph_destroy(Graph *g);
-long long graph_edge_count_directed(const Graph *g);
-
-// (Opcional: funciones adicionales)
-int    id_from_pxy(const Graph *g, int p, int x, int y);
+int add_enemy (Graph *g, int p, int x, int y, int cost);
+int add_wall  (Graph *g, int p, int x1, int y1, int x2, int y2);
+int add_portal(Graph *g, int p1, int x1, int y1, int p2, int x2, int y2);
+int add_stairs(Graph *g, int p, int x, int y);
 
 #endif
