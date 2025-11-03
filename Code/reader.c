@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdbool.h>
 //parametros de máximos 
 #define MAX_LINEA 256
@@ -200,4 +201,18 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
     } 
     fclose(fp);
     return 0;  
+}
+
+int main(int argc, char **argv) {
+    Castillo c;
+    if (argc != 2) {
+        fprintf(stderr, "Uso: %s archivo\n", argv[0]);
+        return -1;
+    }
+
+    char txt = atoi(argv[1]); //archivo
+    lectura_archivo("Castle/"+txt, &c);
+
+    
+    return 0;
 }
