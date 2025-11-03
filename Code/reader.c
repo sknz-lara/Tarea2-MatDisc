@@ -114,7 +114,7 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
         int piso,piso2, x, y, x2, y2, vidas;
         switch(estado){
         // seguimos los casos de estados para verificar que cada linea tenga el número de enteros exactos
-            case DIM:
+            case DIM:{
                 if (!leer_enteros(buffer,3) || sscanf(buffer, "%d %d %d", &castillo->pisos, &castillo->ancho, &castillo->alto) != 3) {
                     printf("Error en línea %d: La dimensión del castillo deben tener exactamente 3 enteros\n", lineas);
                     fclose(fp);
@@ -122,7 +122,8 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
                 }                
                 estado=HRONGAN;
                 break;
-            case HRONGAN:
+            }
+            case HRONGAN:{
                 if (!leer_enteros(buffer,3) || sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3
                     || !coordenadas_validas(castillo, piso, x, y)){
                     printf("Error en línea %d: La posición de Hrongan deben tener exactamente 3 enteros dentro de las dimensiones del castillo\n", lineas);
@@ -132,7 +133,8 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
                 castillo->hrongan.piso=piso; castillo->hrongan.x=x, castillo->hrongan.y=y;
                 estado=SALIDA;
                 break;
-            case SALIDA: // Posición de la salida
+            }
+            case SALIDA:{ // Posición de la salida
                 if (!leer_enteros(buffer,3) || sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3
                     || !coordenadas_validas(castillo, piso, x, y)) {
                     printf("Error en línea %d: La salida deben tener exactamente 3 enteros y estar dentro de las dimensiones del castillo\n", lineas);
@@ -142,8 +144,9 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
                 castillo->salida.piso = piso; castillo->salida.x = x; castillo->salida.y = y;
                 estado = MUROS;
                 break;
-            case MUROS:
-                Muro *m=&castillo->muros[castillo->num_muros++];
+            }
+            case MUROS:{
+                Muro* m=&castillo->muros[castillo->num_muros++];
                 if (!leer_enteros(buffer,5) || sscanf(buffer, "%d %d %d %d %d", &piso, &x, &y, &x2, &y2) != 5 ||
                     !coordenadas_validas(castillo, piso, x, y) ||
                     !coordenadas_validas(castillo, piso, x2, y2)) {
@@ -154,7 +157,8 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
                 m->inicio.piso = piso; m->inicio.x = x; m->inicio.y = y;
                 m->x_fin = x2; m->y_fin = y2;
                 break;
-            case MONSTRUO:
+            }
+            case MONSTRUO:{
                 Monstruo *mons=&castillo->monstruos[castillo->num_monstruos++];
                 if (!leer_enteros(buffer,4) || sscanf(buffer, "%d %d %d %d", &piso, &x, &y, &vidas) != 4 ||
                     !coordenadas_validas(castillo, piso, x, y)) {
@@ -167,7 +171,8 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
                 mons->posicion_monstruo.y = y;
                 mons->vidas = vidas;
                 break;
-            case PORTAL:
+            }
+            case PORTAL: {
                 Portal *p=&castillo->portales[castillo->num_portales++];
                 if (!leer_enteros(buffer,6) || sscanf(buffer, "%d %d %d %d %d %d", &piso, &x, &y, &piso2, &x2, &y2) != 6 ||
                     !coordenadas_validas(castillo, piso, x, y) || !coordenadas_validas(castillo, piso2, x2, y2)) {
@@ -178,7 +183,8 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
                 p->portal_inicio.piso = piso; p->portal_inicio.x = x; p->portal_inicio.y = y;
                 p->portal_fin.piso = piso2; p->portal_fin.x = x2; p->portal_fin.y = y2;
                 break;
-            case ESCALERA:
+            }
+            case ESCALERA: {
                 Escalera *e=&castillo->escaleras[castillo->num_escaleras++];
                 if (!leer_enteros(buffer,3) ||sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3 ||
                     !coordenadas_validas(castillo, piso, x, y) || !coordenadas_validas(castillo, piso + 1, x, y)) {
@@ -189,6 +195,7 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
                 e->posicion_inferior.piso = piso; e->posicion_inferior.x = x; e->posicion_inferior.y = y;
                 e->posicion_superior.piso = piso + 1; e->posicion_superior.x = x; e->posicion_superior.y = y;
                 break;
+            }
         }
     } 
     fclose(fp);
