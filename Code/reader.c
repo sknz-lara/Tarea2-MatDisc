@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
     }
 
     char* txt = (argv[1]); //archivo
-    //lectura_archivo("C:\\Users\\cuchu\\OneDrive - Universidad de Concepción\\Informática\2025-2\\Mate_Discretas\\Tarea2-MatDisc\\Castles/"+txt, &c);
+    //lectura_archivo("C:\\Users\\cuchu\\OneDrive - Universidad de Concepción\\Informática\\2025-2\\Mate_Discretas\\Tarea2-MatDisc\\Castles\\SampleCastle.txt", &c);
     lectura_archivo(txt, &c);
     printf("Castillo leido: %d pisos, ancho %d y alto %d\n", c.pisos, c.ancho, c.alto);
     printf("Hrongan: piso %d, x %d, y %d\n", c.hrongan.piso, c.hrongan.x, c.hrongan.y);
