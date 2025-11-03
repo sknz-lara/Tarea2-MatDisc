@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "castle.h"
 #include "draft.h"
+#include "reader.h"
+#include "bfs.h"
 
 static int clampi(int v, int lo, int hi) {
     if (v < lo) return lo;
@@ -9,67 +11,77 @@ static int clampi(int v, int lo, int hi) {
     return v;
 }
 
-int main(int argc, char **argv) {
-    if (argc != 4) {
-        fprintf(stderr, "Uso: %s P X Y\n", argv[0]);
-        fprintf(stderr, "Ejemplo: %s 2 4 3\n", argv[0]);
+int find_node_id(const Graph *g, int p, int x, int y);
+
+int main(void) {
+    char archivo[128];
+    printf("Ingrese el nombre del archivo del castillo: ");
+    scanf("%s", archivo);
+
+    Castillo c;
+    lectura_archivo(archivo, &c);
+
+    printf("Castillo leído: %d pisos, ancho %d y alto %d\n", c.pisos, c.ancho, c.alto);
+    printf("Hrongan en: piso %d, (%d,%d)\n", c.hrongan.piso, c.hrongan.x, c.hrongan.y);
+    printf("Salida en: piso %d, (%d,%d)\n", c.salida.piso, c.salida.x, c.salida.y);
+
+    Graph g = create(c.pisos, c.ancho, c.alto);
+
+    for (int i = 0; i < c.num_muros; ++i)
+        add_wall(&g, c.muros[i].inicio.piso, c.muros[i].inicio.x, c.muros[i].inicio.y,
+                      c.muros[i].x_fin, c.muros[i].y_fin);
+
+    for (int i = 0; i < c.num_monstruos; ++i)
+        add_enemy(&g, c.monstruos[i].posicion_monstruo.piso,
+                      c.monstruos[i].posicion_monstruo.x,
+                      c.monstruos[i].posicion_monstruo.y,
+                      c.monstruos[i].vidas);
+
+    for (int i = 0; i < c.num_portales; ++i)
+        add_portal(&g, c.portales[i].portal_inicio.piso,
+                      c.portales[i].portal_inicio.x, c.portales[i].portal_inicio.y,
+                      c.portales[i].portal_fin.piso,
+                      c.portales[i].portal_fin.x, c.portales[i].portal_fin.y);
+
+    for (int i = 0; i < c.num_escaleras; ++i)
+        add_stairs(&g, c.escaleras[i].posicion_inferior.piso,
+                      c.escaleras[i].posicion_inferior.x,
+                      c.escaleras[i].posicion_inferior.y);
+
+    int inicio_id = find_node_id(&g, c.hrongan.piso, c.hrongan.x, c.hrongan.y);
+    int salida_id = find_node_id(&g, c.salida.piso, c.salida.x, c.salida.y);
+    printf("Nodo inicio_id = %d, salida_id = %d\n", inicio_id, salida_id);
+
+
+    if (inicio_id == -1 || salida_id == -1) {
+        fprintf(stderr, "Error: no se pudo encontrar el nodo inicial o final.\n");
+        destroy(&g);
         return EXIT_FAILURE;
     }
 
-    int P = atoi(argv[1]);
-    int X = atoi(argv[2]);
-    int Y = atoi(argv[3]);
-
-    if (P <= 0 || X <= 0 || Y <= 0) {
-        fprintf(stderr, "Error: P, X, Y deben ser positivos.\n");
-        return EXIT_FAILURE;
+    for (int i = 0; i < g.n_nodes; ++i) {
+    Node *n = &g.nodes[i];
+    if (n->count == 0) continue;
+    printf("Nodo [%d,%d,%d] -> ", n->p, n->x, n->y);
+    for (int j = 0; j < n->count; ++j) {
+        Node *v = n->neighbors[j];
+        printf("[%d,%d,%d] ", v->p, v->x, v->y);
+    }
+    printf("\n");
     }
 
-    Graph g = create(P, X, Y);
+    int vidas;
+    printf("Ingrese vidas iniciales: ");
+    scanf("%d", &vidas);
 
-    printf("Castillo creado con %d nodos (%d pisos de %dx%d)\n", g.n_nodes, P, X, Y);
-    printf("Aristas iniciales (aprox): %lld\n", edge_count(&g) / 2);
+    printf("El grafo tiene %lld aristas en total.\n", edge_count(&g));
+    int total_vecinos = 0;
+    for (int i = 0; i < g.n_nodes; ++i) total_vecinos += g.nodes[i].count;
+    printf("Promedio de vecinos por nodo: %.2f\n", (float)total_vecinos / g.n_nodes);
 
-    int ex1 = (X >= 2) ? 1 : 0;
-    int ey1 = (Y >= 2) ? 1 : 0;
-    add_enemy(&g, 0, ex1, ey1, 5);
-    if (X >= 4 && Y >= 3) add_enemy(&g, 0, X - 1, Y - 2, 9);
-    if (P >= 2 && X >= 3 && Y >= 2) add_enemy(&g, 1, X - 2, 1, 7);
 
-    if (X >= 3) {
-        int kx = clampi(X / 2, 1, X - 1);
-        add_wall(&g, 0, kx, 0, kx, Y - 1);
-    }
-    if (Y >= 2) {
-        int ky = clampi(Y / 2, 1, Y - 1);
-        if (P >= 2) add_wall(&g, 1, 0, ky, X - 1, ky);
-        else add_wall(&g, 0, 0, ky, X - 1, ky);
-    }
-
-    if (P >= 2) {
-        int sx = X / 2;
-        int sy = Y / 2;
-        add_stairs(&g, 0, sx, sy);
-        if (P >= 3) {
-            int sx2 = (X > 1) ? X - 1 : 0;
-            int sy2 = (Y > 1) ? Y - 1 : 0;
-            add_stairs(&g, 1, sx2, sy2);
-        }
-    }
-
-    if (P >= 2) {
-        add_portal(&g, 0, 0, 0, 1, X - 1, Y - 1);
-    } else {
-        if (X > 1 || Y > 1) add_portal(&g, 0, 0, 0, 0, X - 1, Y - 1);
-    }
-
-    printf("Aristas tras modificaciones (aprox): %lld\n", edge_count(&g) / 2);
-
-    if (draft_render_txt(&g, "castle.txt") == 0)
-        printf("Archivo 'castle.txt' generado correctamente.\n");
-    else
-        fprintf(stderr, "Error: no se pudo generar 'castle.txt'\n");
+    bfs_camino(&g, inicio_id, salida_id, vidas);
 
     destroy(&g);
-    return EXIT_SUCCESS;
+    return 0;
 }
