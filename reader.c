@@ -5,28 +5,6 @@
 
 #include "reader.h"
 
-/* Cuenta si una línea contiene exactamente n enteros (soporta BOM UTF-8). */
-static int leer_enteros(const char* linea, int n){
-    int contador = 0;
-    const char* ptr = linea;
-    int temp;
-
-    /* Saltar BOM si existe (0xEF,0xBB,0xBF) */
-    if ((unsigned char)ptr[0] == 0xEF && (unsigned char)ptr[1] == 0xBB && (unsigned char)ptr[2] == 0xBF) {
-        ptr += 3;
-    }
-
-    while (sscanf(ptr, "%d", &temp) == 1) {
-        contador++;
-        /* Avanzar hasta el siguiente espacio o fin */
-        while (*ptr != ' ' && *ptr != '\0' && *ptr != '\n' && *ptr != '\r') ptr++;
-        while (*ptr == ' ') ptr++;
-        if (*ptr == '\0') break;
-    }
-
-    return (contador == n);
-}
-
 /* Coordenadas de celda (índices 0..dim-1) para Hrongan, salida, monstruos, portales, escaleras */
 static bool coordenadas_validas_celda(const Castillo* c, int piso, int x, int y) {
     return c &&
@@ -88,11 +66,11 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
     while (fgets(buffer, sizeof(buffer), fp)) {
         lineas++;
 
-        /* Normalizar fin de línea (como el original) */
-        buffer[strcspn(buffer, "\n")] = 0;
+        /* Recortar CRLF/CR/LF (WSL/Windows-friendly) */
+        buffer[strcspn(buffer, "\r\n")] = 0;
 
         /* Saltar líneas vacías */
-        if (strlen(buffer) == 0) continue;
+        if (buffer[0] == '\0') continue;
 
         /* Cambios de sección */
         if (strcmp(buffer, "monstruos") == 0) { estado = MONSTRUO; continue; }
@@ -103,8 +81,7 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
 
         switch (estado) {
             case DIM: {
-                if (!leer_enteros(buffer, 3) ||
-                    sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3) {
+                if (sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3) {
                     printf("Error en línea %d: la dimensión del castillo debe tener exactamente 3 enteros\n", lineas);
                     fclose(fp);
                     return -1;
@@ -122,8 +99,7 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
             }
 
             case HRONGAN: {
-                if (!leer_enteros(buffer, 3) ||
-                    sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3 ||
+                if (sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3 ||
                     !coordenadas_validas_celda(castillo, piso, x, y)) {
                     printf("Error en línea %d: la posición de Hrongan debe tener 3 enteros dentro de las dimensiones\n", lineas);
                     fclose(fp);
@@ -137,8 +113,7 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
             }
 
             case SALIDA: {
-                if (!leer_enteros(buffer, 3) ||
-                    sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3 ||
+                if (sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3 ||
                     !coordenadas_validas_celda(castillo, piso, x, y)) {
                     printf("Error en línea %d: la salida debe tener 3 enteros dentro de las dimensiones\n", lineas);
                     fclose(fp);
@@ -147,16 +122,16 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
                 castillo->salida.piso = piso;
                 castillo->salida.x    = x;
                 castillo->salida.y    = y;
-                estado = MUROS; /* de aquí en adelante, muros hasta que cambie la sección */
+                estado = MUROS;
                 break;
             }
 
             case MUROS: {
-                if (!leer_enteros(buffer, 5) ||
-                    sscanf(buffer, "%d %d %d %d %d", &piso, &x, &y, &x2, &y2) != 5 ||
+                if (sscanf(buffer, "%d %d %d %d %d", &piso, &x, &y, &x2, &y2) != 5 ||
                     !muro_valido(castillo, piso, x, y, x2, y2)) {
                     printf("Error en línea %d: cada muro son 5 enteros válidos; "
                            "debe ser vertical u horizontal, con 0<k<dim y extremos en el borde permitido.\n", lineas);
+                    printf("  Línea: \"%s\"\n", buffer); /* ayuda a depurar qué llegó realmente */
                     fclose(fp);
                     return -1;
                 }
@@ -172,8 +147,7 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
             }
 
             case MONSTRUO: {
-                if (!leer_enteros(buffer, 4) ||
-                    sscanf(buffer, "%d %d %d %d", &piso, &x, &y, &vidas) != 4 ||
+                if (sscanf(buffer, "%d %d %d %d", &piso, &x, &y, &vidas) != 4 ||
                     !coordenadas_validas_celda(castillo, piso, x, y)) {
                     printf("Error en línea %d: cada monstruo son 4 enteros válidos\n", lineas);
                     fclose(fp);
@@ -193,8 +167,7 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
             }
 
             case PORTAL: {
-                if (!leer_enteros(buffer, 6) ||
-                    sscanf(buffer, "%d %d %d %d %d %d", &piso, &x, &y, &piso2, &x2, &y2) != 6 ||
+                if (sscanf(buffer, "%d %d %d %d %d %d", &piso, &x, &y, &piso2, &x2, &y2) != 6 ||
                     !coordenadas_validas_celda(castillo, piso, x, y) ||
                     !coordenadas_validas_celda(castillo, piso2, x2, y2)) {
                     printf("Error en línea %d: cada portal son 6 enteros válidos\n", lineas);
@@ -213,8 +186,7 @@ int lectura_archivo(const char* txt, Castillo* castillo) {
             }
 
             case ESCALERA: {
-                if (!leer_enteros(buffer, 3) ||
-                    sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3 ||
+                if (sscanf(buffer, "%d %d %d", &piso, &x, &y) != 3 ||
                     !coordenadas_validas_celda(castillo, piso, x, y) ||
                     !coordenadas_validas_celda(castillo, piso + 1, x, y)) {
                     printf("Error en línea %d: cada escalera son 3 enteros válidos y debe conectar con piso+1\n", lineas);
