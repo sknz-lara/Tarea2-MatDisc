@@ -1,7 +1,7 @@
 # Proyecto Castillo
-**Asignatura:** <Matematicas Discretas>  
-**Profesor/a:** <Guillermo Cabrera Vives>  
-**Integrantes:** <Martín Lara Castro> | <Valentina Serón Canales> | <Nicolás Torres Burgos>
+**Asignatura:** Matematicas Discretas
+**Profesor:** Guillermo Cabrera Vives  
+**Integrantes:** Martín Lara Castro | Valentina Serón Canales | Nicolás Torres Burgos
 **Fecha:** <03/11/2025>  
 
 ---
