@@ -1,6 +1,6 @@
 # Proyecto Castillo
-**Asignatura:** <Natenaticas Discretas>  
-**Profesor/a:** <Guillermo >  
+**Asignatura:** <Matematicas Discretas>  
+**Profesor/a:** <Guillermo Cabrera Vives>  
 **Integrantes:** <Martín Lara Castro> | <Valentina Serón Canales> | <Nicolás Torres Burgos>
 **Fecha:** <03/11/2025>  
 
