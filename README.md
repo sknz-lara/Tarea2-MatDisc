@@ -1,4 +1,4 @@
-# 🏰 Proyecto Castillo
+# Proyecto Castillo
 **Asignatura:** <Natenaticas Discretas>  
 **Profesor/a:** <Guillermo >  
 **Integrantes:** <Martín Lara Castro> | <Valentina Serón Canales> | <Nicolás Torres Burgos>
@@ -6,7 +6,7 @@
 
 ---
 
-## 🧩 Descripción general
+## Descripción general
 Este programa construye y analiza un **castillo representado como grafo tridimensional**, donde cada celda puede contener muros, portales, escaleras o monstruos.  
 El objetivo es encontrar un **camino desde la posición de Hrongan hasta la salida**, considerando las **vidas iniciales** y los **costos por monstruos**.
 
@@ -17,7 +17,7 @@ Durante la ejecución, el usuario:
 
 ---
 
-## ⚙️ Requisitos
+## Requisitos
 - **Compilador:** `gcc` compatible con estándar **C11**  
 - **Sistema operativo:** Linux o Windows con **WSL**  
 - **Herramientas necesarias:**  
@@ -27,7 +27,7 @@ Durante la ejecución, el usuario:
 
 ---
 
-## 🧱 Compilación
+## Compilación
 
 ### Opción 1 — Usando Makefile (recomendada)
 Compilar el proyecto:
@@ -67,7 +67,7 @@ Ejecutar:
 
 ---
 
-## ▶️ Uso del programa
+## Uso del programa
 
 1. Ejecuta el binario:
    ```bash
@@ -79,11 +79,11 @@ Ejecutar:
    - Información general del castillo (pisos, dimensiones, posición de Hrongan y de la salida).  
    - Cantidad total de **aristas** y **promedio de vecinos por nodo**.  
    - Resultado del **camino calculado** mediante BFS según las vidas disponibles.
-5. Al finalizar, podrás elegir si deseas procesar otro archivo (`y/n`).
+5. Al finalizar, se da la posiblidad de elegir procesar otro archivo (`y/n`).
 
 ---
 
-## 📁 Estructura del proyecto
+## Estructura del proyecto
 
 | Archivo        | Descripción breve |
 |----------------|-------------------|
@@ -96,7 +96,6 @@ Ejecutar:
 
 ---
 
-## 🧰 Notas adicionales
-- El programa valida todas las entradas del usuario (incluyendo errores de lectura o entradas vacías).
+## Notas adicionales
 - Si el archivo no se puede leer o tiene formato inválido, el programa indicará el error y permitirá volver a intentar.
 ---
